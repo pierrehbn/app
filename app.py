@@ -4,12 +4,13 @@ import requests
 from bs4 import BeautifulSoup
 import pandas as pd
 
-st.set_page_config(page_title="Radar Immo - Liège", layout="wide")
-st.title("🏠 Radar Immo : Embourg · Beaufays · Chaudfontaine")
+st.set_page_config(page_title="Radar Immo - Debug", layout="wide")
+st.title("🏠 Radar Immo : Debug - Embourg · Beaufays · Chaudfontaine")
 
 sources = [
     "immoweb.be",
-    "immovlan.be"
+    "immovlan.be",
+    "zimmo.be"  # Ajout d'une 3e source pour plus de résultats
 ]
 
 zones = ["Embourg", "Beaufays", "Chaudfontaine"]
@@ -50,12 +51,13 @@ def enrich(url):
             "Lien": url
         }
 
-def search_duckduckgo(query, max_results=3):
+def search_duckduckgo(query, max_results=10):
     try:
         results = ddg(query, max_results=max_results)
+        st.write(f"🔍 Résultats bruts pour : {query}", results)  # Affichage debug
         return [r['href'] for r in results if 'href' in r]
     except Exception as e:
-        print(f"Erreur DuckDuckGo pour '{query}':", e)
+        st.error(f"Erreur DuckDuckGo pour '{query}': {e}")
         return []
 
 if st.button("🔍 Lancer la recherche"):
@@ -64,7 +66,7 @@ if st.button("🔍 Lancer la recherche"):
         for zone in zones:
             for source in sources:
                 query = f"site:{source} maison à vendre {zone}"
-                urls = search_duckduckgo(query, max_results=3)
+                urls = search_duckduckgo(query, max_results=10)
                 for url in urls:
                     enriched = enrich(url)
                     all_results.append(enriched)
