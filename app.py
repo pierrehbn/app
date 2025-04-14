@@ -1,19 +1,38 @@
 import streamlit as st
-from duckduckgo_search import ddg
 import requests
 from bs4 import BeautifulSoup
 import pandas as pd
 
-st.set_page_config(page_title="Radar Immo - Debug", layout="wide")
-st.title("🏠 Radar Immo : Debug - Embourg · Beaufays · Chaudfontaine")
+st.set_page_config(page_title="Radar Immo - SerpApi", layout="wide")
+st.title("🏠 Radar Immo (via Google API) — Embourg · Beaufays · Chaudfontaine")
 
 sources = [
     "immoweb.be",
     "immovlan.be",
-    "zimmo.be"  # Ajout d'une 3e source pour plus de résultats
+    "zimmo.be"
 ]
 
 zones = ["Embourg", "Beaufays", "Chaudfontaine"]
+
+def search_serpapi(query, num=5):
+    try:
+        api_key = st.secrets["serpapi_key"]
+        params = {
+            "engine": "google",
+            "q": query,
+            "api_key": api_key,
+            "num": num,
+            "hl": "fr",
+            "gl": "be"
+        }
+        res = requests.get("https://serpapi.com/search", params=params)
+        res.raise_for_status()
+        results = res.json().get("organic_results", [])
+        st.write(f"🔍 Résultats pour : {query}", results)
+        return [r["link"] for r in results if "link" in r]
+    except Exception as e:
+        st.error(f"Erreur SerpApi pour '{query}': {e}")
+        return []
 
 def enrich(url):
     try:
@@ -51,22 +70,13 @@ def enrich(url):
             "Lien": url
         }
 
-def search_duckduckgo(query, max_results=10):
-    try:
-        results = ddg(query, max_results=max_results)
-        st.write(f"🔍 Résultats bruts pour : {query}", results)  # Affichage debug
-        return [r['href'] for r in results if 'href' in r]
-    except Exception as e:
-        st.error(f"Erreur DuckDuckGo pour '{query}': {e}")
-        return []
-
 if st.button("🔍 Lancer la recherche"):
     all_results = []
     with st.spinner("Recherche en cours..."):
         for zone in zones:
             for source in sources:
                 query = f"site:{source} maison à vendre {zone}"
-                urls = search_duckduckgo(query, max_results=10)
+                urls = search_serpapi(query, num=5)
                 for url in urls:
                     enriched = enrich(url)
                     all_results.append(enriched)
