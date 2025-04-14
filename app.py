@@ -1,5 +1,5 @@
 import streamlit as st
-from duckduckgo_search import ddg
+from duckduckgo_search import DuckDuckGoSearch
 import requests
 from bs4 import BeautifulSoup
 import pandas as pd
@@ -60,7 +60,8 @@ def enrich(url):
         }
 
 def search_duckduckgo(query, max_results=5):
-    results = ddg(query, max_results=max_results)
+    ddg = DuckDuckGoSearch()
+    results = ddg.text(query, max_results=max_results)
     return [result['href'] for result in results]
 
 with st.spinner("Recherche en cours..."):
