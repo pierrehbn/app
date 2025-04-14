@@ -4,22 +4,15 @@ import requests
 from bs4 import BeautifulSoup
 import pandas as pd
 
-st.set_page_config(page_title="Radar Immo - Tri Localisé", layout="wide")
-st.title("🏠 Radar Immo : Annonces à Embourg · Beaufays · Chaudfontaine")
+st.set_page_config(page_title="Radar Immo - Liège", layout="wide")
+st.title("🏠 Radar Immo : Embourg · Beaufays · Chaudfontaine")
 
 sources = [
     "immoweb.be",
-    "immovlan.be",
-    "zimmo.be",
-    "logic-immo.be",
-    "trevi.be",
-    "weinvest.be",
-    "century21.be",
-    "immoscoop.be"
+    "immovlan.be"
 ]
 
 zones = ["Embourg", "Beaufays", "Chaudfontaine"]
-all_results = []
 
 def enrich(url):
     try:
@@ -28,8 +21,6 @@ def enrich(url):
         soup = BeautifulSoup(res.text, 'html.parser')
 
         title = soup.find("meta", property="og:title")
-        description = soup.find("meta", property="og:description")
-
         full_text = soup.get_text(separator=' ')
         price_match = ""
         address_match = ""
@@ -59,7 +50,7 @@ def enrich(url):
             "Lien": url
         }
 
-def search_duckduckgo(query, max_results=5):
+def search_duckduckgo(query, max_results=3):
     try:
         results = ddg(query, max_results=max_results)
         return [r['href'] for r in results if 'href' in r]
@@ -67,15 +58,15 @@ def search_duckduckgo(query, max_results=5):
         print(f"Erreur DuckDuckGo pour '{query}':", e)
         return []
 
-with st.spinner("Recherche en cours..."):
-    for zone in zones:
-        for source in sources:
-            query = f"site:{source} maison à vendre {zone}"
-            urls = search_duckduckgo(query, max_results=5)
-            for url in urls:
-                if any(domain in url for domain in sources):
+if st.button("🔍 Lancer la recherche"):
+    all_results = []
+    with st.spinner("Recherche en cours..."):
+        for zone in zones:
+            for source in sources:
+                query = f"site:{source} maison à vendre {zone}"
+                urls = search_duckduckgo(query, max_results=3)
+                for url in urls:
                     enriched = enrich(url)
                     all_results.append(enriched)
-
-df = pd.DataFrame(all_results)
-st.dataframe(df, use_container_width=True)
+    df = pd.DataFrame(all_results)
+    st.dataframe(df, use_container_width=True)
