@@ -60,14 +60,18 @@ def enrich(url):
         }
 
 def search_duckduckgo(query, max_results=5):
-    results = ddg(query, max_results=max_results, region="be-fr", safesearch="Moderate")
-    return [result['href'] for result in results]
+    try:
+        results = ddg(query, max_results=max_results)
+        return [r['href'] for r in results if 'href' in r]
+    except Exception as e:
+        print(f"Erreur DuckDuckGo pour '{query}':", e)
+        return []
 
 with st.spinner("Recherche en cours..."):
     for zone in zones:
         for source in sources:
             query = f"site:{source} maison à vendre {zone}"
-            urls = search_duckduckgo(query)
+            urls = search_duckduckgo(query, max_results=5)
             for url in urls:
                 if any(domain in url for domain in sources):
                     enriched = enrich(url)
